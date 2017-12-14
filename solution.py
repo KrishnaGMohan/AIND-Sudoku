@@ -61,7 +61,11 @@ def eliminate(values):
     dict
         The values dictionary with the assigned values eliminated from peers
     """
-    # TODO: Copy your code from the classroom to complete this function
+    for key, value in values.items():
+        if len(value) == 1:
+            for peer in peers[key]:
+                values[peer] = values[peer].replace(value,'')
+    return(values)
     raise NotImplementedError
 
 
@@ -86,6 +90,17 @@ def only_choice(values):
     You should be able to complete this function by copying your code from the classroom
     """
     # TODO: Copy your code from the classroom to complete this function
+    for unit in unitlist:
+        valuestr = ''.join([values[box] for box in unit if len(values[box]) != 1])
+        for v in [values[box] for box in unit if len(values[box]) == 1]:
+            valuestr = valuestr.replace(v,'')
+        values_to_check = set(valuestr)
+        for n in values_to_check:
+            if valuestr.count(n) == 1:
+                for find_box in unit:
+                    if values[find_box].count(n) == 1:
+                        values[find_box] = n
+    return values
     raise NotImplementedError
 
 
@@ -104,6 +119,27 @@ def reduce_puzzle(values):
         no longer produces any changes, or False if the puzzle is unsolvable 
     """
     # TODO: Copy your code from the classroom and modify it to complete this function
+    stalled = False
+    while not stalled:
+        # Check how many boxes have a determined value
+        solved_values_before = len([box for box in values.keys() if len(values[box]) == 1])
+
+        # Your code here: Use the Eliminate Strategy
+        values = eliminate(values)
+
+        # Your code here: Use the Only Choice Strategy
+        values = only_choice(values)
+
+        # Check how many boxes have a determined value, to compare
+        solved_values_after = len([box for box in values.keys() if len(values[box]) == 1])
+        
+        # If no new values were added, stop the loop.
+        stalled = solved_values_before == solved_values_after
+        
+        # Sanity check, return False if there is a box with zero available values:
+        if len([box for box in values.keys() if len(values[box]) == 0]):
+            return False
+    return values
     raise NotImplementedError
 
 
@@ -127,6 +163,27 @@ def search(values):
     and extending it to call the naked twins strategy.
     """
     # TODO: Copy your code from the classroom to complete this function
+    # First, reduce the puzzle using the previous function
+    values = reduce_puzzle(values)
+    if not values:
+        return(values)
+    
+    y = [v for k,v in values.items() if len(v) > 1]
+    if len(y) > 0:
+        minlen = len(min(y, key=len))
+    else:
+        return(values)
+
+    cboxes = [k for k,v in values.items() if len(v) == minlen]
+    cbox = cboxes[0]
+    cval = values[cbox]
+
+    for val in cval:
+        try_solve = values.copy()
+        try_solve[cbox] = val
+        x = search(try_solve)
+        if x:
+            return(x)
     raise NotImplementedError
 
 
