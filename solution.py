@@ -1,18 +1,18 @@
 
 from utils import *
 
-
 row_units = [cross(r, cols) for r in rows]
 column_units = [cross(rows, c) for c in cols]
 square_units = [cross(rs, cs) for rs in ('ABC','DEF','GHI') for cs in ('123','456','789')]
 unitlist = row_units + column_units + square_units
 
 # TODO: Update the unit list to add the new diagonal units
-unitlist = unitlist
+diag1_units = [[''.join(i) for i in zip(rows,cols)]]
+diag2_units = [[''.join(i) for i in zip(rows,cols[::-1])]]
+unitlist = unitlist + diag1_units + diag2_units
 
 units = dict((s, [u for u in unitlist if s in u]) for s in boxes)
 peers = dict((s, set(sum(units[s],[]))-set([s])) for s in boxes)
-
 
 def naked_twins(values):
     """Eliminate values using the naked twins strategy.
@@ -41,8 +41,26 @@ def naked_twins(values):
     and because it is simpler (since the reduce_puzzle function already calls this
     strategy repeatedly).
     """
-    # TODO: Implement this function!
-    raise NotImplementedError
+    for unit in unitlist:
+        unit_dict = { box:values[box] for box in unit }
+        pair_dict = { k:v for k,v in unit_dict.items() if len(v)==2 }
+        
+        pairs = []
+        tmp_pair_dict = pair_dict.copy()
+        for box1,value1 in pair_dict.items() :
+            tmp_pair_dict.pop(box1, None)
+            boxes2 = [box2 for box2, value2 in tmp_pair_dict.items() if value1 == value2]
+            if len(boxes2) > 0:
+                pairs.append([box1, boxes2[0]])
+        
+        for pair in pairs:
+            vals_to_remove = unit_dict[pair[0]]
+            for val in vals_to_remove:
+                for box in unit:
+                    if box != pair[0] and box != pair[1]:
+                        values[box] = values[box].replace(val,'')
+    return(values)
+
 
 
 def eliminate(values):
@@ -66,7 +84,6 @@ def eliminate(values):
             for peer in peers[key]:
                 values[peer] = values[peer].replace(value,'')
     return(values)
-    raise NotImplementedError
 
 
 def only_choice(values):
@@ -101,8 +118,6 @@ def only_choice(values):
                     if values[find_box].count(n) == 1:
                         values[find_box] = n
     return values
-    raise NotImplementedError
-
 
 def reduce_puzzle(values):
     """Reduce a Sudoku puzzle by repeatedly applying all constraint strategies
@@ -140,8 +155,6 @@ def reduce_puzzle(values):
         if len([box for box in values.keys() if len(values[box]) == 0]):
             return False
     return values
-    raise NotImplementedError
-
 
 def search(values):
     """Apply depth first search to solve Sudoku puzzles in order to solve puzzles
@@ -184,7 +197,7 @@ def search(values):
         x = search(try_solve)
         if x:
             return(x)
-    raise NotImplementedError
+
 
 
 def solve(grid):
